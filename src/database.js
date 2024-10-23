@@ -9,7 +9,7 @@ const updateTransferStatus = async (clientId, currentStatus) => {
 
     const result = await Service.findOneAndUpdate(
         { clientId },
-        { $set: { cdn: currentStatus } }, // Use $set to update the field
+        { $set: { status: currentStatus } }, // Use $set to update the field
         { returnOriginal: false } // Optional: returns the updated document
     );
 
