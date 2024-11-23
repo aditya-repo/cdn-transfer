@@ -7,8 +7,12 @@
         "**/.DS_Store": true,
         "**/Thumbs.db": true,
         "package-lock.json": true,
-        ".env": true,
+        // ".env": true,
         "node_modules": true,
-        "package.json": true
+        "package.json": true,
+        "input": true,
+        "HWW80.json": true,
+        // ".gitignore": true,
+        // "output": true
     }
 }

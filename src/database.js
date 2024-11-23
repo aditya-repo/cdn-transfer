@@ -1,39 +1,68 @@
-// mongodb_operations.js
-const { MongoClient } = require('mongodb');
-const uri = process.env.MONGODB_URI; // MongoDB connection URI from environment variables
-let db;
+const mongoose = require('mongoose');
+const uri = process.env.MONGODB_URI;
+const Service = require("../models/service")
+const SignatureUrl = require("../models/signatureUrl")
 
-const updateTransferStatus = async (clientId, currentStatus) => {
-    const database = await connectToDatabase();
-    const Service = database.collection('services'); // Your MongoDB collection name
-
-    const result = await Service.findOneAndUpdate(
-        { clientId },
-        { $set: { status: currentStatus } }, // Use $set to update the field
-        { returnOriginal: false } // Optional: returns the updated document
-    );
-
-    return result.value ? result.value.clientId : null; 
-};
-
-
+// Connect to MongoDB
 const connectToDatabase = async () => {
-    if (!db) {
-        const client = new MongoClient(uri);
-        await client.connect();
-        db = client.db(process.env.DATABASE_NAME); // Database name from environment variable
+    if (!mongoose.connection.readyState) {
+        const start = new Date()
+        await mongoose.connect(uri);
+        const end = new Date()
+        console.log('Database connected in', ((end - start)/1000), 'sec');
     }
-    return db;
 };
 
+// Fetch client ID where the status is "cdn-queued"
+const fetchCDNtransferStatus = async () => {
+    await connectToDatabase();
+    const service = await Service.findOne({ status: 'cdn-transfering' });
+    return service ? service.clientId : null;
+};
+
+// Fetch client ID where the status is "cdn-queued"
 const fetchClientId = async () => {
-    const database = await connectToDatabase();
-    const Service = database.collection('services'); // Your MongoDB collection name
-
-    
-    const result = await Service.findOne({ cdn: "queued" });
-    // console.log(result);
-    return result ? result.clientId : null; // Return clientId or null if not found
+    await connectToDatabase();
+    const service = await Service.findOne({ status: 'cdn-queued' });
+    return service ? service.clientId : null;
 };
 
-module.exports = { fetchClientId, updateTransferStatus };
+// Update transfer status for a given client ID
+const updateTransferStatus = async (clientId, currentStatus) => {
+    await connectToDatabase();
+    const updatedService = await Service.findOneAndUpdate(
+        { clientId },
+        { $set: { status: currentStatus } },
+        { new: true } // Returns the updated document
+    );
+    return updatedService ? updatedService.clientId : null;
+};
+
+// Create a new SignatureUrl document
+const createSignatureUrlObject = async (clientId, type, name, cover, data) => {
+    await connectToDatabase();
+
+    // Prepare the data array
+    const dataArray = Object.entries(data).map(([key, value]) => ({
+        filename: key,
+        url: value,
+    }));
+
+    // Create a new instance
+    const newSignatureUrl = new SignatureUrl({
+        clientId,
+        type,
+        name,
+        cover,
+        data: dataArray,
+    });
+
+    try {
+        // await newSignatureUrl.save();
+        console.log('Document saved successfully');
+    } catch (error) {
+        console.error('Error saving document:', error.message);
+    }
+};
+
+module.exports = { fetchClientId, updateTransferStatus, createSignatureUrlObject, fetchCDNtransferStatus };

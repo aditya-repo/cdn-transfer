@@ -108,30 +108,8 @@ const downloadFile = async (s3FilePath, localDownloadPath) => {
 };
 
 
-const getPreSignedUrl = async (s3FilePath, expiresIn = 900) => {
-    try {
-        console.log(`Generating URL for S3 Key: ${s3FilePath}`);
 
-        const command = new GetObjectCommand({
-            Bucket: config.bucketName,
-            Key: s3FilePath, // Ensure this key matches your S3 structure
-        });
-
-        // Generate the pre-signed URL
-        const url = await getSignedUrl(s3Client, command, { expiresIn });
-        return url;
-    } catch (error) {
-        // Log specific S3 errors like NoSuchKey
-        if (error.name === 'NoSuchKey') {
-            console.error(`No such key found in the bucket: ${s3FilePath}`);
-        } else {
-            console.error(`Error generating pre-signed URL for ${s3FilePath}:`, error);
-        }
-        return 'Error or file not found';
-    }
-};
-
-const generatePreSignedUrls = async (folderPath, clientId, expiresIn = 900) => {
+const generatePreSignedUrlsV1 = async (folderPath, clientId, expiresIn = 900) => {
     const result = { clientId };
 
     const processFolder = async (currentFolderPath) => {
@@ -163,4 +141,4 @@ const generatePreSignedUrls = async (folderPath, clientId, expiresIn = 900) => {
     return result;
 };
 
-module.exports = { listFiles, uploadFolder, downloadFile, getPreSignedUrl, generatePreSignedUrls };
+module.exports = { listFiles, uploadFolder, downloadFile, generatePreSignedUrlsV1 };

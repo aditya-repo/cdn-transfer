@@ -1,11 +1,25 @@
 require('dotenv').config();
-const { fetchClientId, updateTransferStatus } = require('./src/database.js');
-const { uploadFolder, generatePreSignedUrls } = require('./src/fileOperations.js');
-const { saveJsonToFile } = require('./src/util.js');
+const { fetchClientId, updateTransferStatus, fetchCDNtransferStatus } = require('./src/database.js');
+const { uploadFolder } = require('./src/fileOperations.js');
+const { generatePreSignedUrlsV2 } = require("./src/SignatureUrl.js")
 
 const main = async () => {
     try {
-        const INPUT_PATH = process.env.INPUT_DIRECTORY
+        const startTime = Date.now();
+        let INPUT_PATH
+        if (process.env.SERVER == 'local') {
+            INPUT_PATH = process.env.INPUT_DIRECTORY
+        } else {
+            INPUT_PATH = process.env.SERVER_INPUT_DIRECTORY
+        }
+
+        const clienttransfer = await fetchCDNtransferStatus()
+
+        if (clienttransfer) {
+            console.log("Worker busy, try later");
+            return
+        }
+
         const clientId = await fetchClientId();
 
         if (!clientId) {
@@ -18,25 +32,18 @@ const main = async () => {
 
         console.log(`Uploading folder: ${folderPath}`);
 
-        // Start measuring time
-        const startTime = Date.now(); 
-
         await updateTransferStatus(clientId, "cdn-transfering")
 
         // Start uploading the folder
-        // await uploadFolder(folderPath, clientId);
+        await uploadFolder(folderPath, clientId);
 
         // Generate pre-signed URLs
-        // const preSignedUrls = await generatePreSignedUrls(folderPath, clientId);
-        // console.log("Generated pre-signed URLs:", JSON.stringify(preSignedUrls, null, 900));
-
-
-        // const jsonFileName = `${clientId}.json`; // You can customize the filename as needed
-        // saveJsonToFile(preSignedUrls, jsonFileName);
+        const expirationTime = 60 * 60 * 24 * 7; // One Week Expiration
+        await generatePreSignedUrlsV2(INPUT_PATH, clientId, expirationTime);
 
         // Calculate total time taken in seconds
-        const endTime = Date.now(); // Record the end time
-        const totalTime = (endTime - startTime) / 1000; // Convert milliseconds to seconds
+        const endTime = Date.now();
+        const totalTime = (endTime - startTime) / 1000;
 
         console.log(`Total time taken for upload: ${totalTime.toFixed(2)} seconds`);
 
