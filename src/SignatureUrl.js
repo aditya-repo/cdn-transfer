@@ -89,7 +89,4 @@ const generatePreSignedUrlsV2 = async (baseFolderPath, clientId, expiresIn = 900
     await processTypeFolders(clientFolderPath, clientId);
 };
 
-
-
-
 module.exports = { generatePreSignedUrlsV2 }

@@ -4,7 +4,6 @@ const s3Client = require('./s3Client'); // Import the S3 client
 const { ListObjectsV2Command, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
 const getContentType = require('./contentTypes'); // Import content type function
 const config = require('./config');
-const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 
 // Function to list files and directories in the Space
 const listFiles = async () => {
@@ -108,6 +107,31 @@ const downloadFile = async (s3FilePath, localDownloadPath) => {
 };
 
 
+const deleteLocalFolder = (folderPath) => {
+    if (fs.existsSync(folderPath)) {
+        const files = fs.readdirSync(folderPath);
+
+        // Deleting files and subdirectories recursively
+        for (const file of files) {
+            const filePath = path.join(folderPath, file);
+            if (fs.lstatSync(filePath).isDirectory()) {
+                deleteLocalFolder(filePath); // Recursively delete subdirectories
+            } else {
+                fs.unlinkSync(filePath); // Delete file
+            }
+        }
+
+        // Try to remove the directory itself
+        try {
+            fs.rmdirSync(folderPath); // Remove the empty directory
+            console.log(`Directory ${folderPath} deleted successfully.`);
+        } catch (err) {
+            console.error(`Error deleting directory ${folderPath}:`, err.message);
+        }
+    } else {
+        console.log(`Directory ${folderPath} does not exist.`);
+    }
+};
 
 const generatePreSignedUrlsV1 = async (folderPath, clientId, expiresIn = 900) => {
     const result = { clientId };
@@ -141,4 +165,4 @@ const generatePreSignedUrlsV1 = async (folderPath, clientId, expiresIn = 900) =>
     return result;
 };
 
-module.exports = { listFiles, uploadFolder, downloadFile, generatePreSignedUrlsV1 };
+module.exports = { listFiles, uploadFolder, downloadFile, generatePreSignedUrlsV1, deleteLocalFolder };

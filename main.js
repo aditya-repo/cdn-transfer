@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { fetchClientId, updateTransferStatus, fetchCDNtransferStatus } = require('./src/database.js');
-const { uploadFolder } = require('./src/fileOperations.js');
+const { uploadFolder, deleteLocalFolder } = require('./src/fileOperations.js');
 const { generatePreSignedUrlsV2 } = require("./src/SignatureUrl.js")
 
 const main = async () => {
@@ -32,14 +32,14 @@ const main = async () => {
 
         console.log(`Uploading folder: ${folderPath}`);
 
-        await updateTransferStatus(clientId, "cdn-transfering")
+        // await updateTransferStatus(clientId, "cdn-transfering")
 
         // Start uploading the folder
-        await uploadFolder(folderPath, clientId);
+        // await uploadFolder(folderPath, clientId);
 
         // Generate pre-signed URLs
         const expirationTime = 60 * 60 * 24 * 7; // One Week Expiration
-        await generatePreSignedUrlsV2(INPUT_PATH, clientId, expirationTime);
+        // await generatePreSignedUrlsV2(INPUT_PATH, clientId, expirationTime);
 
         // Calculate total time taken in seconds
         const endTime = Date.now();
@@ -47,7 +47,9 @@ const main = async () => {
 
         console.log(`Total time taken for upload: ${totalTime.toFixed(2)} seconds`);
 
-        await updateTransferStatus(clientId, "completed")
+        // await updateTransferStatus(clientId, "completed")
+
+        await deleteLocalFolder(folderPath, clientId)
 
         console.log("Folder upload completed.");
     } catch (error) {
