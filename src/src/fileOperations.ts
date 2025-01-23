@@ -1,12 +1,24 @@
-const fs = require('fs'); // Required for file system operations
-const path = require('path');
-const s3Client = require('./s3Client'); // Import the S3 client
-const { ListObjectsV2Command, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
-const getContentType = require('./contentTypes'); // Import content type function
-const config = require('./config');
+import fs from 'fs';
+import path from "path"
+import s3Client from './s3Client';
+import { ListObjectsV2Command, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import getContentType from './contentTypes'
+import config from './config';
+import { getPreSignedUrl } from './SignatureUrl';
+
+
+interface FolderContent {
+    [key: string]: string | FolderContent;
+}
+
+interface PreSignedUrlsResult {
+    clientId: string;
+    [key: string]: string | FolderContent;
+}
+
 
 // Function to list files and directories in the Space
-const listFiles = async () => {
+const listFiles = async (): Promise<void> => {
     try {
         const command = new ListObjectsV2Command({
             Bucket: config.bucketName, // Use the bucket name from the config
@@ -38,7 +50,7 @@ const listFiles = async () => {
 };
 
 // Function to upload files from a folder to the Space
-const uploadFolder = async (folderPath, basePath = '') => {
+const uploadFolder = async (folderPath: string, basePath:string = '') => {
     const files = fs.readdirSync(folderPath); // Read all files in the folder
 
     for (const file of files) {
@@ -56,7 +68,7 @@ const uploadFolder = async (folderPath, basePath = '') => {
 };
 
 // Function to upload a single file to the Space
-const uploadFile = async (filePath, destinationKey) => {
+const uploadFile = async (filePath: string, destinationKey: string) => {
     try {
         const fileStream = fs.createReadStream(filePath);
         const stats = fs.statSync(filePath);
@@ -77,7 +89,7 @@ const uploadFile = async (filePath, destinationKey) => {
 
 
 // Function to download a file from S3
-const downloadFile = async (s3FilePath, localDownloadPath) => {
+const downloadFile = async (s3FilePath: string, localDownloadPath: string) => {
     try {
         // Create the GetObjectCommand to fetch the file
         const command = new GetObjectCommand({
@@ -86,6 +98,10 @@ const downloadFile = async (s3FilePath, localDownloadPath) => {
         });
 
         const data = await s3Client.send(command);
+
+        if (!data.Body) {
+            return false
+        }
 
         // Create a write stream to download the file to the local system
         const fileStream = fs.createWriteStream(localDownloadPath);
@@ -107,7 +123,7 @@ const downloadFile = async (s3FilePath, localDownloadPath) => {
 };
 
 
-const deleteLocalFolder = (folderPath) => {
+const deleteLocalFolder = (folderPath: string) => {
     if (fs.existsSync(folderPath)) {
         const files = fs.readdirSync(folderPath);
 
@@ -125,7 +141,7 @@ const deleteLocalFolder = (folderPath) => {
         try {
             fs.rmdirSync(folderPath); // Remove the empty directory
             console.log(`Directory ${folderPath} deleted successfully.`);
-        } catch (err) {
+        } catch (err:any) {
             console.error(`Error deleting directory ${folderPath}:`, err.message);
         }
     } else {
@@ -133,12 +149,13 @@ const deleteLocalFolder = (folderPath) => {
     }
 };
 
-const generatePreSignedUrlsV1 = async (folderPath, clientId, expiresIn = 900) => {
-    const result = { clientId };
 
-    const processFolder = async (currentFolderPath) => {
+const generatePreSignedUrlsV1 = async (folderPath: string, clientId: string, expiresIn: number = 900) => {
+    const result:PreSignedUrlsResult = { clientId };
+
+    const processFolder = async (currentFolderPath: string): Promise<FolderContent> => {
         const entries = fs.readdirSync(currentFolderPath);
-        const folderContent = {};
+        const folderContent: FolderContent = {};
 
         for (const entry of entries) {
             const entryPath = path.join(currentFolderPath, entry);
@@ -165,4 +182,4 @@ const generatePreSignedUrlsV1 = async (folderPath, clientId, expiresIn = 900) =>
     return result;
 };
 
-module.exports = { listFiles, uploadFolder, downloadFile, generatePreSignedUrlsV1, deleteLocalFolder };
+export { listFiles, uploadFolder, downloadFile, generatePreSignedUrlsV1, deleteLocalFolder };

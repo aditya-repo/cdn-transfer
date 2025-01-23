@@ -1,6 +1,29 @@
-const { Schema, default: mongoose } = require("mongoose")
+import mongoose, { Schema, Document, Model} from "mongoose"
 
-const serviceSchema = new Schema({
+export interface IService extends Document {
+    clientId: string,
+    cloudpackage?: 'silver' | 'gold' | 'platinum' | 'none'
+    maxupload?: number,
+    studiocode?: string
+    folder: Folder[],
+    status?: 'inactive' | 'optimizing' | 'queued' | 'processing' | 'cdn-queued' | 'cdn-transfering' | 'completed'
+    time?:Date,
+    totalfile?: string
+    processedfile? :string
+    stringprocessedfile?: string
+}
+
+interface Folder {
+    foldername: string
+    locationname?: string
+    indexname?: string
+    size?: number
+    count?: number
+    status?: string
+    uploadtime?: Date
+}
+
+const serviceSchema = new Schema <IService>({
     clientId: {
         type: String,
         required: [true, "Client  Id should be required"],
@@ -56,8 +79,8 @@ const serviceSchema = new Schema({
         type: String
     }
 
-}, { timestamp : true })
+}, { timestamps : true })
 
-const Service = mongoose.model("Services", serviceSchema)
+const Service: Model <IService> = mongoose.model<IService>("Services", serviceSchema)
 
-module.exports = Service
+export default Service

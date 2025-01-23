@@ -1,6 +1,19 @@
-const mongoose = require('mongoose');
+import mongoose, { Schema, Model, Document } from "mongoose";
 
-const SignatureUrlSchema = new mongoose.Schema({
+export interface ISignatureUrl extends Document {
+    clientId: string
+    type: 'thumbnail' | 'final'
+    name: string
+    cover: string
+    data: IData[]
+}
+
+export interface IData {
+    filename: string
+    url: string
+}
+
+const SignatureUrlSchema = new mongoose.Schema <ISignatureUrl> ({
     clientId: {
         type: String,
         required: true
@@ -27,6 +40,6 @@ const SignatureUrlSchema = new mongoose.Schema({
     timestamps: true
 });
 
-const SignatureUrl = mongoose.model('SignatureUrl', SignatureUrlSchema);
+const SignatureUrl: Model<ISignatureUrl> = mongoose.model<ISignatureUrl>('SignatureUrl', SignatureUrlSchema);
 
 module.exports = SignatureUrl

@@ -1,13 +1,13 @@
-const fs = require('fs');
-const path = require('path');
-const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
-const { GetObjectCommand } = require('@aws-sdk/client-s3');
-const config = require('./config');
-const s3Client = require('./s3Client'); 
-const { createSignatureUrlObject } = require('./database');
+import fs from'fs';
+import path from'path';
+import { getSignedUrl } from'@aws-sdk/s3-request-presigner';
+import { GetObjectCommand } from'@aws-sdk/client-s3';
+import config from'./config';
+import s3Client from'./s3Client'
+import { createSignatureUrlObject } from'./database';
 
 
-const getPreSignedUrl = async (s3FilePath, expiresIn = 900) => {
+const getPreSignedUrl = async (s3FilePath: string, expiresIn: number = 900) => {
     try {
 
         const command = new GetObjectCommand({
@@ -18,7 +18,7 @@ const getPreSignedUrl = async (s3FilePath, expiresIn = 900) => {
         // Generate the pre-signed URL
         const url = await getSignedUrl(s3Client, command, { expiresIn });
         return url;
-    } catch (error) {
+    } catch (error: any) {
         // Log specific S3 errors like NoSuchKey
         if (error.name === 'NoSuchKey') {
             console.error(`No such key found in the bucket: ${s3FilePath}`);
@@ -29,13 +29,13 @@ const getPreSignedUrl = async (s3FilePath, expiresIn = 900) => {
     }
 };
 
-const generatePreSignedUrlsV2 = async (baseFolderPath, clientId, expiresIn = 900) => {
-    const processFolder = async (subfolderPath, type, name) => {
+const generatePreSignedUrlsV2 = async (baseFolderPath: string, clientId:string, expiresIn:number = 900) => {
+    const processFolder = async (subfolderPath: string, type:string, name: string) => {
         const entries = fs.readdirSync(subfolderPath).filter(entry =>
             fs.lstatSync(path.join(subfolderPath, entry)).isFile()
         );
 
-        const data = {};
+        const data : Record<string, string>={};
         let cover = null;
 
         for (const [index, entry] of entries.entries()) {
@@ -59,7 +59,7 @@ const generatePreSignedUrlsV2 = async (baseFolderPath, clientId, expiresIn = 900
         return { data, cover };
     };
 
-    const processTypeFolders = async (clientFolderPath, clientId) => {
+    const processTypeFolders = async (clientFolderPath: string, clientId: string) => {
         const typeFolders = fs.readdirSync(clientFolderPath); 
 
         for (const typeFolder of typeFolders) {
@@ -67,7 +67,7 @@ const generatePreSignedUrlsV2 = async (baseFolderPath, clientId, expiresIn = 900
 
             if (!fs.lstatSync(typeFolderPath).isDirectory()) continue;
 
-            const type = typeFolder; // `final` or `thumbnail`
+            const type  = typeFolder; // `final` or `thumbnail`
 
             const subfolders = fs.readdirSync(typeFolderPath); // e.g., `1`, `2`, etc.
             for (const subfolder of subfolders) {
@@ -89,4 +89,4 @@ const generatePreSignedUrlsV2 = async (baseFolderPath, clientId, expiresIn = 900
     await processTypeFolders(clientFolderPath, clientId);
 };
 
-module.exports = { generatePreSignedUrlsV2 }
+export { generatePreSignedUrlsV2, getPreSignedUrl }

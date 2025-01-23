@@ -9,7 +9,7 @@
         "package-lock.json": true,
         // ".env": true,
         "node_modules": true,
-        "package.json": true,
+        // "package.json": true,
         "input": true,
         "HWW80.json": true,
         // ".gitignore": true,

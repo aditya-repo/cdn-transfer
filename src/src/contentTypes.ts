@@ -1,8 +1,8 @@
-const path = require('path');
+import path from "path"
 
-const getContentType = (filePath) => {
+const getContentType = (filePath: string) => {
     const ext = path.extname(filePath).toLowerCase();
-    const contentTypes = {
+    const contentTypes : Record<string, string> = {
         '.jpg': 'image/jpeg',
         '.jpeg': 'image/jpeg',
         '.png': 'image/png',
@@ -19,4 +19,4 @@ const getContentType = (filePath) => {
     return contentTypes[ext] || 'application/octet-stream'; // Default to binary if unknown
 };
 
-module.exports = getContentType;
+export default getContentType;

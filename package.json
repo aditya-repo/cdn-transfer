@@ -15,5 +15,9 @@
     "dotenv": "^16.4.5",
     "mongodb": "^6.9.0",
     "mongoose": "^8.8.2"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
   }
 }
